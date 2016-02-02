@@ -27,6 +27,7 @@ import numpy as np
 from mayavi import mlab
 import time
 import wx
+import pdb
 
 ################################################################################
 # Disable the rendering, to get bring up the figure quicker:
@@ -47,7 +48,7 @@ white_glyphs = mlab.points3d(x2, y2, z2, color=(0.9, 0.9, 0.9),
 # Add an outline to show the selected point and center it on the first
 # data point.
 outline = mlab.outline(line_width=3)
-outline.outline_mode = 'cornered'
+outline.outline_mode = 'full'
 outline.bounds = (x1[0]-0.1, x1[0]+0.1,
                   y1[0]-0.1, y1[0]+0.1,
                   z1[0]-0.1, z1[0]+0.1)
@@ -71,10 +72,18 @@ def picker_callback(picker):
     scene = engine.scenes[0]
     vtk_scene = scene.scene
     interactor = vtk_scene.interactor
+    original_mouse_position = interactor.event_position
+    render_window = vtk_scene.render_window
+    #print(original_mouse_position)
 
-    while True:
+    while(True):
+        current_mouse_posiiton = interactor.event_position
+        print(current_mouse_posiiton)
         wx.Yield()
-        print(interactor.event_position)
+        num_shaded_pixels = (abs(current_mouse_posiiton[0] - original_mouse_position[0]) + 1)*(abs(current_mouse_posiiton[1] - original_mouse_position[1]) + 1)
+        render_window.set_pixel_data(original_mouse_position[0], original_mouse_position[1], current_mouse_posiiton[0], current_mouse_posiiton[1], [1,1,1]*num_shaded_pixels, 1)
+        
+
 
     if picker.actor in red_glyphs.actor.actors:
         # Find which data point corresponds to the point picked:
@@ -87,9 +96,7 @@ def picker_callback(picker):
             # point
             x, y, z = x1[point_id], y1[point_id], z1[point_id]
             # Move the outline to the data point.
-            outline.bounds = (x-0.1, x+0.1,
-                              y-0.1, y+0.1,
-                              z-0.1, z+0.1)
+            
 
 
 picker = figure.on_mouse_pick(picker_callback)
